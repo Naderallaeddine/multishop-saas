@@ -416,3 +416,15 @@ FodyWeavers.xsd
 *.msix
 *.msm
 *.msp
+
+# Frontend
+multishop-frontend/node_modules/
+multishop-frontend/.env
+multishop-frontend/.env.local
+
+# Docker
+.env
+
+# IDE
+.vs/
+*.user
