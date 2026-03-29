@@ -1,4 +1,4 @@
-
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using MultiShop.Application.DTOs;
 using MultiShop.Application.Interfaces;
@@ -6,6 +6,7 @@ using MultiShop.Domain.Entities;
 
 namespace MultiShop.API.Controllers;
 
+[Authorize]     
 [ApiController]
 [Route("api/[controller]")]
 public class TenantsController : ControllerBase
