@@ -1,5 +1,7 @@
 using Microsoft.EntityFrameworkCore;
+using MultiShop.Application.Interfaces;
 using MultiShop.Infrastructure.Persistence;
+using MultiShop.Infrastructure.Repositories;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -10,6 +12,9 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(
         builder.Configuration.GetConnectionString("DefaultConnection")));
+
+// Register repositories
+builder.Services.AddScoped<ITenantRepository, TenantRepository>();
 
 var app = builder.Build();
 
