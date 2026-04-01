@@ -2,7 +2,6 @@ version: '3.9'
 
 services:
 
-
   redis:
     image: redis:7-alpine
     container_name: multishop_redis
@@ -13,8 +12,20 @@ services:
     networks:
       - multishop_network
 
+  frontend:
+    build:
+      context: ./multishop-frontend
+      dockerfile: Dockerfile
+    container_name: multishop_frontend
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./multishop-frontend:/app
+      - /app/node_modules
+    networks:
+      - multishop_network
+
 volumes:
-  sqlserver_data:
   redis_data:
 
 networks:
