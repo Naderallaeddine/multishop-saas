@@ -13,6 +13,8 @@ public class ApplicationDbContext : IdentityDbContext<AppUser>
 
     public DbSet<Tenant> Tenants => Set<Tenant>();
     public DbSet<Product> Products => Set<Product>();
+    public DbSet<Order> Orders => Set<Order>();
+    public DbSet<OrderItem> OrderItems => Set<OrderItem>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -35,6 +37,33 @@ public class ApplicationDbContext : IdentityDbContext<AppUser>
             entity.HasOne(p => p.Tenant)
                   .WithMany()
                   .HasForeignKey(p => p.TenantId);
+        });
+
+        modelBuilder.Entity<Order>(entity =>
+        {
+            entity.HasKey(o => o.Id);
+            entity.Property(o => o.TotalAmount).HasPrecision(18, 2);
+            entity.HasOne(o => o.Tenant)
+                  .WithMany()
+                  .HasForeignKey(o => o.TenantId)
+                  .OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne(o => o.Customer)
+                  .WithMany()
+                  .HasForeignKey(o => o.CustomerId)
+                  .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<OrderItem>(entity =>
+        {
+            entity.HasKey(oi => oi.Id);
+            entity.Property(oi => oi.UnitPrice).HasPrecision(18, 2);
+            entity.HasOne(oi => oi.Order)
+                  .WithMany(o => o.Items)
+                  .HasForeignKey(oi => oi.OrderId);
+            entity.HasOne(oi => oi.Product)
+                  .WithMany()
+                  .HasForeignKey(oi => oi.ProductId)
+                  .OnDelete(DeleteBehavior.Restrict);
         });
 
         modelBuilder.Entity<AppUser>(entity =>

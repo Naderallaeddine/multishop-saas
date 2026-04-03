@@ -10,6 +10,7 @@ using MultiShop.Infrastructure.Persistence;
 using MultiShop.Infrastructure.Repositories;
 using MultiShop.Infrastructure.Services;
 
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Database
@@ -63,6 +64,8 @@ builder.Services.AddCors(options =>
 
 // Repositories and Services
 builder.Services.AddScoped<ITenantRepository, TenantRepository>();
+builder.Services.AddScoped<IProductRepository, ProductRepository>();  
+builder.Services.AddScoped<IOrderRepository, OrderRepository>();      
 builder.Services.AddScoped<IJwtService, JwtService>();
 
 // Swagger with JWT support
