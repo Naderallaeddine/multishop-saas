@@ -4,14 +4,27 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using MultiShop.API.Hubs;
+using MultiShop.API.Services;
 using MultiShop.Application.Interfaces;
 using MultiShop.Domain.Entities;
 using MultiShop.Infrastructure.Persistence;
 using MultiShop.Infrastructure.Repositories;
 using MultiShop.Infrastructure.Services;
 
-
 var builder = WebApplication.CreateBuilder(args);
+
+// CORS
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowFrontend", policy =>
+    {
+        policy.WithOrigins("http://localhost:5173")
+              .AllowAnyHeader()
+              .AllowAnyMethod()
+              .AllowCredentials();
+    });
+});
 
 // Database
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
@@ -29,7 +42,7 @@ builder.Services.AddIdentity<AppUser, IdentityRole>(options =>
 .AddEntityFrameworkStores<ApplicationDbContext>()
 .AddDefaultTokenProviders();
 
-// JWT Authentication
+// JWT
 var jwtKey = builder.Configuration["JwtSettings:Key"]!;
 builder.Services.AddAuthentication(options =>
 {
@@ -49,27 +62,32 @@ builder.Services.AddAuthentication(options =>
         IssuerSigningKey = new SymmetricSecurityKey(
             Encoding.UTF8.GetBytes(jwtKey))
     };
-});
-
-// CORS
-builder.Services.AddCors(options =>
-{
-    options.AddPolicy("AllowFrontend", policy =>
+    // Allow SignalR to read token from query string
+    options.Events = new JwtBearerEvents
     {
-        policy.WithOrigins("http://localhost:5173")
-              .AllowAnyHeader()
-              .AllowAnyMethod();
-    });
+        OnMessageReceived = context =>
+        {
+            var accessToken = context.Request.Query["access_token"];
+            var path = context.HttpContext.Request.Path;
+            if (!string.IsNullOrEmpty(accessToken) &&
+                path.StartsWithSegments("/hubs"))
+            {
+                context.Token = accessToken;
+            }
+            return Task.CompletedTask;
+        }
+    };
 });
 
 // Repositories and Services
 builder.Services.AddScoped<ITenantRepository, TenantRepository>();
-builder.Services.AddScoped<IProductRepository, ProductRepository>();  
-builder.Services.AddScoped<IOrderRepository, OrderRepository>();      
+builder.Services.AddScoped<IProductRepository, ProductRepository>();
+builder.Services.AddScoped<IOrderRepository, OrderRepository>();
 builder.Services.AddScoped<IJwtService, JwtService>();
+builder.Services.AddScoped<IOrderNotificationService, OrderNotificationService>();
 
-// Swagger with JWT support
 builder.Services.AddControllers();
+builder.Services.AddSignalR();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
@@ -111,5 +129,6 @@ app.UseCors("AllowFrontend");
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
+app.MapHub<OrderHub>("/hubs/orders");
 
 app.Run();

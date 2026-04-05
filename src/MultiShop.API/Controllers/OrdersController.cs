@@ -15,13 +15,16 @@ public class OrdersController : ControllerBase
 {
     private readonly IOrderRepository _orderRepo;
     private readonly IProductRepository _productRepo;
+    private readonly IOrderNotificationService _notifications;
 
     public OrdersController(
         IOrderRepository orderRepo,
-        IProductRepository productRepo)
+        IProductRepository productRepo,
+        IOrderNotificationService notifications)
     {
         _orderRepo = orderRepo;
         _productRepo = productRepo;
+        _notifications = notifications;
     }
 
     [HttpGet("tenant/{tenantId:guid}")]
@@ -85,6 +88,16 @@ public class OrdersController : ControllerBase
 
         var created = await _orderRepo.CreateAsync(order);
         var result = await _orderRepo.GetByIdAsync(created.Id);
+
+        // Send real-time notification to store owner
+        await _notifications.NotifyNewOrder(dto.TenantId.ToString(), new
+        {
+            orderId = created.Id,
+            totalAmount = total,
+            itemCount = items.Count,
+            placedAt = DateTime.UtcNow
+        });
+
         return CreatedAtAction(nameof(GetById),
             new { id = created.Id }, MapToDto(result!));
     }
@@ -93,7 +106,15 @@ public class OrdersController : ControllerBase
     public async Task<IActionResult> UpdateStatus(
         Guid id, [FromBody] OrderStatus status)
     {
+        var order = await _orderRepo.GetByIdAsync(id);
+        if (order == null) return NotFound();
+
         await _orderRepo.UpdateStatusAsync(id, status);
+
+        // Notify status change
+        await _notifications.NotifyOrderStatusChanged(
+            order.TenantId.ToString(), id, status.ToString());
+
         return NoContent();
     }
 
