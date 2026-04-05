@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.SignalR;
 
 namespace MultiShop.API.Hubs;
 
-[Authorize]
+
 public class OrderHub : Hub
 {
     public async Task JoinTenantGroup(string tenantId)

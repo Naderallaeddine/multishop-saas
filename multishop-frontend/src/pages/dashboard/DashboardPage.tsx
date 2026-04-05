@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { authStore } from '../../store/authStore'
 import { startOrderHub, stopOrderHub } from '../../api/signalr'
@@ -14,25 +14,16 @@ export default function DashboardPage() {
   const user = authStore.getUser()
   const [notifications, setNotifications] = useState<Notification[]>([])
   const [connected, setConnected] = useState(false)
-  const hubRef = useRef<Awaited<ReturnType<typeof startOrderHub>>>(null)
 
   useEffect(() => {
-    let cancelled = false
-
     const connect = async () => {
       // For demo use a hardcoded tenantId
       // In production this comes from the user's profile
-      const tenantId = 'demo-tenant'
+      const tenantId = 'e5561c69-2805-4240-9d86-d87544f08d9c'
 
       try {
         const hub = await startOrderHub(tenantId)
         if (!hub) return
-        if (cancelled) {
-          await stopOrderHub(hub)
-          return
-        }
-
-        hubRef.current = hub
         setConnected(true)
 
         hub.on('NewOrder', (order) => {
@@ -50,21 +41,13 @@ export default function DashboardPage() {
             time: new Date().toLocaleTimeString()
           }, ...prev])
         })
-      } catch (err) {
-        if (!cancelled) {
-          console.error('SignalR connection failed — is the API running?', err)
-        }
+      } catch {
+        console.log('SignalR connection failed — backend may not be running')
       }
     }
 
-    void connect()
-    return () => {
-      cancelled = true
-      setConnected(false)
-      const h = hubRef.current
-      hubRef.current = null
-      void stopOrderHub(h)
-    }
+    connect()
+    return () => { stopOrderHub() }
   }, [])
 
   const handleLogout = () => {
