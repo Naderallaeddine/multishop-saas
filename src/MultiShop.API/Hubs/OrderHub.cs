@@ -1,0 +1,18 @@
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.SignalR;
+
+namespace MultiShop.API.Hubs;
+
+
+public class OrderHub : Hub
+{
+    public async Task JoinTenantGroup(string tenantId)
+    {
+        await Groups.AddToGroupAsync(Context.ConnectionId, $"tenant-{tenantId}");
+    }
+
+    public async Task LeaveTenantGroup(string tenantId)
+    {
+        await Groups.RemoveFromGroupAsync(Context.ConnectionId, $"tenant-{tenantId}");
+    }
+}

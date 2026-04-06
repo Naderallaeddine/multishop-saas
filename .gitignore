@@ -428,3 +428,6 @@ multishop-frontend/.env.local
 # IDE
 .vs/
 *.user
+
+# Local secrets
+src/MultiShop.API/appsettings.Development.json
